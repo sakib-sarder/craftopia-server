@@ -29,6 +29,9 @@ async function run() {
     const usersCollection = client
       .db("craftopia")
       .collection("usersCollection");
+    const classCollection = client
+      .db("craftopia")
+      .collection("classCollection");
 
     // Save User Info In DB
     app.put("/users/:email", async (req, res) => {
@@ -47,13 +50,19 @@ async function run() {
       res.send(result);
     });
 
+    // Add Class in DB
+    app.post("/classes", async (req, res) => {
+      const {addedClass} = req.body;
+      const result = await classCollection.insertOne(addedClass);
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
     // Ensures that the client will close when you finish/error
-    
   }
 }
 run().catch(console.dir);
