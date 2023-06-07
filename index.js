@@ -52,8 +52,14 @@ async function run() {
 
     // Add Class in DB
     app.post("/classes", async (req, res) => {
-      const {addedClass} = req.body;
+      const { addedClass } = req.body;
       const result = await classCollection.insertOne(addedClass);
+      res.send(result);
+    });
+
+    // Get Classes
+    app.get("/classes", async (req, res) => {
+      const result = await classCollection.find().toArray();
       res.send(result);
     });
 
