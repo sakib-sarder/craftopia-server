@@ -67,6 +67,14 @@ app.get("/users", async (req, res) => {
   res.send(result);
 });
 
+// Get Instructors
+app.get("/instructors", async (req, res) => {
+  const query = { role: "Instructor" };
+  const result = await usersCollection.find(query).toArray();
+  console.log(result);
+  res.send(result);
+});
+
 // Add Class in DB
 app.post("/classes", async (req, res) => {
   const { addedClass } = req.body;
