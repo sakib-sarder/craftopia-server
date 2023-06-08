@@ -53,6 +53,20 @@ app.put("/users/:email", async (req, res) => {
   res.send(result);
 });
 
+//Get single User
+app.get("/users/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { email: email };
+  const result = await usersCollection.findOne(query);
+  res.send(result);
+});
+
+//Get all user
+app.get("/users", async (req, res) => {
+  const result = await usersCollection.find().toArray();
+  res.send(result);
+});
+
 // Add Class in DB
 app.post("/classes", async (req, res) => {
   const { addedClass } = req.body;
@@ -69,12 +83,10 @@ app.get("/classes", async (req, res) => {
 // Get Classes for Instructor
 app.get("/classes/:email", async (req, res) => {
   const email = req.params.email;
-  console.log(email);
   const query = { instructorEmail: email };
   const result = await classCollection.find(query).toArray();
   res.send(result);
 });
-
 
 app.listen(port, () => {
   console.log(`Craftopia is running on Port : ${port}`);
