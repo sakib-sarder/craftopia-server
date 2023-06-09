@@ -35,6 +35,9 @@ dbConnect();
 //Collections
 const usersCollection = client.db("craftopia").collection("usersCollection");
 const classCollection = client.db("craftopia").collection("classCollection");
+const selectedCollection = client
+  .db("craftopia")
+  .collection("selectedCollection");
 
 app.get("/", (req, res) => {
   res.send("Craftopia is Running");
@@ -71,7 +74,7 @@ app.get("/users", async (req, res) => {
 app.get("/instructors", async (req, res) => {
   const query = { role: "Instructor" };
   const result = await usersCollection.find(query).toArray();
-  console.log(result);
+  // console.log(result);
   res.send(result);
 });
 
@@ -86,6 +89,14 @@ app.post("/classes", async (req, res) => {
 app.get("/classes", async (req, res) => {
   const result = await classCollection.find().toArray();
   res.send(result);
+});
+
+// Get Sorted Classes
+app.get("/sortedClass", async (req, res) => {
+  const result = await classCollection.find({}).sort({
+    enrolled: -1,
+  }).limit(6).toArray();
+  res.send(result)
 });
 
 // Get Classes for Instructor
@@ -106,8 +117,30 @@ app.patch("/classes/status/:id", async (req, res) => {
       status: status,
     },
   };
-  console.log(updateClass);
+  // console.log(updateClass);
   const result = await classCollection.updateOne(query, updateClass);
+  res.send(result);
+});
+
+// selected Class
+app.post("/selectedClasses", async (req, res) => {
+  const selectedClass = req.body;
+  const result = await selectedCollection.insertOne(selectedClass);
+  res.send(result);
+});
+
+app.get("/selectedClasses/:email", async (req, res) => {
+  const email = req.params.email;
+  // console.log(email);
+  const filter = { studentEmail: email };
+  const result = await selectedCollection.find(filter).toArray();
+  res.send(result);
+});
+
+app.delete("/selectedClasses/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await selectedCollection.deleteOne(query);
   res.send(result);
 });
 
