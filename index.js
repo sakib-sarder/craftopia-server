@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const port = process.env.PORT || 5000;
@@ -93,6 +93,21 @@ app.get("/classes/:email", async (req, res) => {
   const email = req.params.email;
   const query = { instructorEmail: email };
   const result = await classCollection.find(query).toArray();
+  res.send(result);
+});
+
+// Update Classes
+app.patch("/classes/status/:id", async (req, res) => {
+  const id = req.params.id;
+  const status = req.body.status;
+  const query = { _id: new ObjectId(id) };
+  const updateClass = {
+    $set: {
+      status: status,
+    },
+  };
+  console.log(updateClass);
+  const result = await classCollection.updateOne(query, updateClass);
   res.send(result);
 });
 
