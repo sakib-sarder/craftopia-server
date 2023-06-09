@@ -2,14 +2,13 @@ require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(cors());
-
-//
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1gttryf.mongodb.net/?retryWrites=true&w=majority`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -41,6 +40,15 @@ const selectedCollection = client
 
 app.get("/", (req, res) => {
   res.send("Craftopia is Running");
+});
+
+//Generate JWT Token
+app.post("/jwt", (req, res) => {
+  const email = req.body;
+  const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "1h",
+  });
+  res.send({token});
 });
 
 // Save User Info In DB
@@ -93,10 +101,14 @@ app.get("/classes", async (req, res) => {
 
 // Get Sorted Classes
 app.get("/sortedClass", async (req, res) => {
-  const result = await classCollection.find({}).sort({
-    enrolled: -1,
-  }).limit(6).toArray();
-  res.send(result)
+  const result = await classCollection
+    .find({})
+    .sort({
+      enrolled: -1,
+    })
+    .limit(6)
+    .toArray();
+  res.send(result);
 });
 
 // Get Classes for Instructor
