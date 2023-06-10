@@ -69,6 +69,27 @@ app.post("/jwt", (req, res) => {
   res.send({ token });
 });
 
+// Verify Admin
+const verifyAdmin = async (req, res, next) => {
+  const email = req.decoded.email;
+  const query = { email: email };
+  const user = await usersCollection.findOne(query);
+  if (user?.role !== "Admin") {
+    return res.status(403).send({ error: true, message: "forbidden" });
+  }
+  next();
+};
+// Verify Admin
+const verifyInstructor = async (req, res, next) => {
+  const email = req.decoded.email;
+  const query = { email: email };
+  const user = await usersCollection.findOne(query);
+  if (user?.role !== "Instructor") {
+    return res.status(403).send({ error: true, message: "forbidden" });
+  }
+  next();
+};
+
 // Save User Info In DB
 app.put("/users/:email", async (req, res) => {
   const email = req.params.email;
@@ -90,13 +111,13 @@ app.get("/users/:email", async (req, res) => {
   res.send(result);
 });
 
-//Get all user
-app.get("/users", async (req, res) => {
+//Get all user (admin route)
+app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
   const result = await usersCollection.find().toArray();
   res.send(result);
 });
 
-// Get Instructors
+// Get Instructors (Instructor page)
 app.get("/instructors", async (req, res) => {
   const query = { role: "Instructor" };
   const result = await usersCollection.find(query).toArray();
@@ -104,20 +125,20 @@ app.get("/instructors", async (req, res) => {
   res.send(result);
 });
 
-// Add Class in DB
+// Add Class in DB (instructor route)
 app.post("/classes", async (req, res) => {
   const { addedClass } = req.body;
   const result = await classCollection.insertOne(addedClass);
   res.send(result);
 });
 
-// Get Classes
+// Get Classes (classes Page)
 app.get("/classes", async (req, res) => {
   const result = await classCollection.find().toArray();
   res.send(result);
 });
 
-// Get Sorted Classes
+// Get Sorted Classes (popular classes section)
 app.get("/sortedClass", async (req, res) => {
   const result = await classCollection
     .find({})
@@ -129,15 +150,15 @@ app.get("/sortedClass", async (req, res) => {
   res.send(result);
 });
 
-// Get Classes for Instructor
-app.get("/classes/:email", async (req, res) => {
+// Get Classes for Instructor (Instructor route)
+app.get("/classes/:email", verifyJWT, verifyInstructor, async (req, res) => {
   const email = req.params.email;
   const query = { instructorEmail: email };
   const result = await classCollection.find(query).toArray();
   res.send(result);
 });
 
-// Update Classes status
+// Update Classes status (admin)
 app.patch("/classes/status/:id", async (req, res) => {
   const id = req.params.id;
   const status = req.body.status;
@@ -152,7 +173,7 @@ app.patch("/classes/status/:id", async (req, res) => {
   res.send(result);
 });
 
-// update class feedback
+// update class feedback (admin)
 app.patch("/classes/feedback/:id", async (req, res) => {
   const id = req.params.id;
   const feedback = req.body.feedback;
@@ -162,19 +183,36 @@ app.patch("/classes/feedback/:id", async (req, res) => {
       feedback: feedback,
     },
   };
-  // console.log(updateClass);
   const result = await classCollection.updateOne(query, updateClass);
   res.send(result);
 });
 
+//Update Class (Instructor)
+app.patch("/class/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedInfo = req.body;
+  const filter = { _id: new ObjectId(id) };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set: {
+    className: updatedInfo.updateInfo.className,
+    classImage: updatedInfo.updateInfo.photoURL,
+    price: updatedInfo.updateInfo.price,
+    totalSeat: updatedInfo.updateInfo.totalSeat,
+    }
+  };
+  const result = await classCollection.updateOne(filter, updateDoc, options);
+  res.send(result);
+});
 
-// selected Class
+// add a selected Class (student route)
 app.post("/selectedClasses", async (req, res) => {
   const selectedClass = req.body;
   const result = await selectedCollection.insertOne(selectedClass);
   res.send(result);
 });
 
+// get selected class for specific user (student route)
 app.get("/selectedClasses/:email", verifyJWT, async (req, res) => {
   const email = req.params.email;
   const decodedEmail = req.decoded.email;
@@ -186,6 +224,7 @@ app.get("/selectedClasses/:email", verifyJWT, async (req, res) => {
   res.send(result);
 });
 
+// delete selected class (student route)
 app.delete("/selectedClasses/:id", async (req, res) => {
   const id = req.params.id;
   const query = { _id: new ObjectId(id) };
