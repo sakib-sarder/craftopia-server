@@ -10,6 +10,24 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// verify jwt
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "Unauthrized Access" });
+  }
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .send({ error: true, message: "Unauthrized Access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1gttryf.mongodb.net/?retryWrites=true&w=majority`;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -48,7 +66,7 @@ app.post("/jwt", (req, res) => {
   const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
     expiresIn: "1h",
   });
-  res.send({token});
+  res.send({ token });
 });
 
 // Save User Info In DB
@@ -119,7 +137,7 @@ app.get("/classes/:email", async (req, res) => {
   res.send(result);
 });
 
-// Update Classes
+// Update Classes status
 app.patch("/classes/status/:id", async (req, res) => {
   const id = req.params.id;
   const status = req.body.status;
@@ -134,6 +152,22 @@ app.patch("/classes/status/:id", async (req, res) => {
   res.send(result);
 });
 
+// update class feedback
+app.patch("/classes/feedback/:id", async (req, res) => {
+  const id = req.params.id;
+  const feedback = req.body.feedback;
+  const query = { _id: new ObjectId(id) };
+  const updateClass = {
+    $set: {
+      feedback: feedback,
+    },
+  };
+  // console.log(updateClass);
+  const result = await classCollection.updateOne(query, updateClass);
+  res.send(result);
+});
+
+
 // selected Class
 app.post("/selectedClasses", async (req, res) => {
   const selectedClass = req.body;
@@ -141,9 +175,12 @@ app.post("/selectedClasses", async (req, res) => {
   res.send(result);
 });
 
-app.get("/selectedClasses/:email", async (req, res) => {
+app.get("/selectedClasses/:email", verifyJWT, async (req, res) => {
   const email = req.params.email;
-  // console.log(email);
+  const decodedEmail = req.decoded.email;
+  if (email !== decodedEmail) {
+    return res.status(403).send({ error: true, message: "Forbidden Access" });
+  }
   const filter = { studentEmail: email };
   const result = await selectedCollection.find(filter).toArray();
   res.send(result);
