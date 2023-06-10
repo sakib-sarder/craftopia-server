@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const app = express();
 
 // Middlewares
@@ -55,6 +56,21 @@ const classCollection = client.db("craftopia").collection("classCollection");
 const selectedCollection = client
   .db("craftopia")
   .collection("selectedCollection");
+
+// Generate client Secret (Stripe)
+app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+  const {price} = req.body;
+  console.log(price);
+  if (price) {
+    const amount = parseFloat(price) * 100;
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: "usd",
+      payment_method_types: ["card"],
+    });
+    res.send({clientSecret: paymentIntent.client_secret})
+  }
+});
 
 app.get("/", (req, res) => {
   res.send("Craftopia is Running");
