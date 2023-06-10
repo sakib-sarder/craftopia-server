@@ -138,6 +138,12 @@ app.get("/classes", async (req, res) => {
   res.send(result);
 });
 
+//get classes for Admin
+app.get("/admin/classes", verifyJWT, verifyAdmin, async (req, res) => {
+  const result = await classCollection.find().toArray();
+  res.send(result);
+});
+
 // Get Sorted Classes (popular classes section)
 app.get("/sortedClass", async (req, res) => {
   const result = await classCollection
@@ -145,7 +151,6 @@ app.get("/sortedClass", async (req, res) => {
     .sort({
       enrolled: -1,
     })
-    .limit(6)
     .toArray();
   res.send(result);
 });
@@ -195,11 +200,11 @@ app.patch("/class/:id", async (req, res) => {
   const options = { upsert: true };
   const updateDoc = {
     $set: {
-    className: updatedInfo.updateInfo.className,
-    classImage: updatedInfo.updateInfo.photoURL,
-    price: updatedInfo.updateInfo.price,
-    totalSeat: updatedInfo.updateInfo.totalSeat,
-    }
+      className: updatedInfo.updateInfo.className,
+      classImage: updatedInfo.updateInfo.photoURL,
+      price: updatedInfo.updateInfo.price,
+      totalSeat: updatedInfo.updateInfo.totalSeat,
+    },
   };
   const result = await classCollection.updateOne(filter, updateDoc, options);
   res.send(result);
