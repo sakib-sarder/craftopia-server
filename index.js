@@ -98,12 +98,24 @@ const verifyAdmin = async (req, res, next) => {
   }
   next();
 };
-// Verify Admin
+
+// Verify Instructor
 const verifyInstructor = async (req, res, next) => {
   const email = req.decoded.email;
   const query = { email: email };
   const user = await usersCollection.findOne(query);
   if (user?.role !== "Instructor") {
+    return res.status(403).send({ error: true, message: "forbidden" });
+  }
+  next();
+};
+
+// Verify Student
+const verifyStudent= async (req, res, next) => {
+  const email = req.decoded.email;
+  const query = { email: email };
+  const user = await usersCollection.findOne(query);
+  if (user?.role) {
     return res.status(403).send({ error: true, message: "forbidden" });
   }
   next();
@@ -170,6 +182,7 @@ app.get("/sortedClass", async (req, res) => {
     .sort({
       enrolled: -1,
     })
+    .limit(6)
     .toArray();
   res.send(result);
 });
@@ -205,6 +218,7 @@ app.patch("/classes/:id", async (req, res) => {
   const updateDoc = {
     $inc: {
       enrolled: 1,
+      totalSeat: -1,
     },
   };
   const result = await classCollection.updateOne(query, updateDoc);
@@ -252,7 +266,7 @@ app.post("/selectedClasses", async (req, res) => {
 });
 
 // get selected class for specific user (student route)
-app.get("/selectedClasses/:email", verifyJWT, async (req, res) => {
+app.get("/selectedClasses/:email", verifyJWT, verifyStudent, async (req, res) => {
   const email = req.params.email;
   const decodedEmail = req.decoded.email;
   if (email !== decodedEmail) {
@@ -292,6 +306,15 @@ app.post("/payments", async (req, res) => {
   const result = await paymentsCollections.insertOne(paymentInfo);
   res.send(result);
 });
+
+// get payment history for (student)
+// app.get("/payments/:email", async (req, res) => {
+//   const email = req.params.email;
+//   console.log(email);
+//   const query = { studentEmail: email };
+//   const result = await paymentsCollections.find(query).toArray();
+//   res.send(result);
+// });
 
 app.listen(port, () => {
   console.log(`Craftopia is running on Port : ${port}`);
