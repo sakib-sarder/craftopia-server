@@ -285,7 +285,7 @@ app.get(
 );
 
 // enrolled classes (student)
-app.get("/enrolled/:email", verifyJWT, async (req, res) => {
+app.get("/enrolled/:email", verifyJWT, verifyStudent, async (req, res) => {
   const email = req.params.email;
   const decodedEmail = req.decoded.email;
   if (email !== decodedEmail) {
@@ -294,7 +294,10 @@ app.get("/enrolled/:email", verifyJWT, async (req, res) => {
   const filter = {
     studentEmail: email,
   };
-  const result = await paymentsCollections.find(filter).toArray();
+  const result = await paymentsCollections
+    .find(filter)
+    .sort({ date: -1 })
+    .toArray();
   res.send(result);
 });
 
