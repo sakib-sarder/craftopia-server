@@ -56,10 +56,13 @@ const classCollection = client.db("craftopia").collection("classCollection");
 const selectedCollection = client
   .db("craftopia")
   .collection("selectedCollection");
+const paymentsCollections = client
+  .db("craftopia")
+  .collection("paymentsCollection");
 
 // Generate client Secret (Stripe)
 app.post("/create-payment-intent", verifyJWT, async (req, res) => {
-  const {price} = req.body;
+  const { price } = req.body;
   console.log(price);
   if (price) {
     const amount = parseFloat(price) * 100;
@@ -68,7 +71,7 @@ app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       currency: "usd",
       payment_method_types: ["card"],
     });
-    res.send({clientSecret: paymentIntent.client_secret})
+    res.send({ clientSecret: paymentIntent.client_secret });
   }
 });
 
@@ -194,6 +197,21 @@ app.patch("/classes/status/:id", async (req, res) => {
   res.send(result);
 });
 
+// Update enrolled
+app.patch("/classes/:id", async (req, res) => {
+  const id = req.params.id;
+  console.log(id);
+  const query = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $inc: {
+      enrolled: 1
+    },
+  };
+  const result = await classCollection.updateOne(query, updateDoc);
+  console.log(result);
+  res.send(result);
+});
+
 // update class feedback (admin)
 app.patch("/classes/feedback/:id", async (req, res) => {
   const id = req.params.id;
@@ -250,6 +268,14 @@ app.delete("/selectedClasses/:id", async (req, res) => {
   const id = req.params.id;
   const query = { _id: new ObjectId(id) };
   const result = await selectedCollection.deleteOne(query);
+  res.send(result);
+});
+
+// Post Paymennst Data
+app.post("/payments", async (req, res) => {
+  const paymentInfo = req.body;
+  delete paymentInfo._id;
+  const result = await paymentsCollections.insertOne(paymentInfo);
   res.send(result);
 });
 
