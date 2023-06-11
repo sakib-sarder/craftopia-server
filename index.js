@@ -111,7 +111,7 @@ const verifyInstructor = async (req, res, next) => {
 };
 
 // Verify Student
-const verifyStudent= async (req, res, next) => {
+const verifyStudent = async (req, res, next) => {
   const email = req.decoded.email;
   const query = { email: email };
   const user = await usersCollection.findOne(query);
@@ -165,7 +165,8 @@ app.post("/classes", async (req, res) => {
 
 // Get Classes (classes Page)
 app.get("/classes", async (req, res) => {
-  const result = await classCollection.find().toArray();
+  const query = { status: "Approved" };
+  const result = await classCollection.find(query).toArray();
   res.send(result);
 });
 
@@ -177,8 +178,9 @@ app.get("/admin/classes", verifyJWT, verifyAdmin, async (req, res) => {
 
 // Get Sorted Classes (popular classes section)
 app.get("/sortedClass", async (req, res) => {
+  const query = { status: "Approved" };
   const result = await classCollection
-    .find({})
+    .find(query)
     .sort({
       enrolled: -1,
     })
@@ -266,16 +268,21 @@ app.post("/selectedClasses", async (req, res) => {
 });
 
 // get selected class for specific user (student route)
-app.get("/selectedClasses/:email", verifyJWT, verifyStudent, async (req, res) => {
-  const email = req.params.email;
-  const decodedEmail = req.decoded.email;
-  if (email !== decodedEmail) {
-    return res.status(403).send({ error: true, message: "Forbidden Access" });
+app.get(
+  "/selectedClasses/:email",
+  verifyJWT,
+  verifyStudent,
+  async (req, res) => {
+    const email = req.params.email;
+    const decodedEmail = req.decoded.email;
+    if (email !== decodedEmail) {
+      return res.status(403).send({ error: true, message: "Forbidden Access" });
+    }
+    const filter = { studentEmail: email };
+    const result = await selectedCollection.find(filter).toArray();
+    res.send(result);
   }
-  const filter = { studentEmail: email };
-  const result = await selectedCollection.find(filter).toArray();
-  res.send(result);
-});
+);
 
 // enrolled classes (student)
 app.get("/enrolled/:email", verifyJWT, async (req, res) => {
