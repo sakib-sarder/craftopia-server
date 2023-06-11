@@ -204,7 +204,7 @@ app.patch("/classes/:id", async (req, res) => {
   const query = { _id: new ObjectId(id) };
   const updateDoc = {
     $inc: {
-      enrolled: 1
+      enrolled: 1,
     },
   };
   const result = await classCollection.updateOne(query, updateDoc);
@@ -260,6 +260,20 @@ app.get("/selectedClasses/:email", verifyJWT, async (req, res) => {
   }
   const filter = { studentEmail: email };
   const result = await selectedCollection.find(filter).toArray();
+  res.send(result);
+});
+
+// enrolled classes (student)
+app.get("/enrolled/:email", verifyJWT, async (req, res) => {
+  const email = req.params.email;
+  const decodedEmail = req.decoded.email;
+  if (email !== decodedEmail) {
+    return res.status(403).send({ error: true, message: "Forbidden Access" });
+  }
+  const filter = {
+    studentEmail: email,
+  };
+  const result = await paymentsCollections.find(filter).toArray();
   res.send(result);
 });
 
