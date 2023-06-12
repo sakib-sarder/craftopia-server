@@ -331,14 +331,6 @@ app.post("/payments", async (req, res) => {
   res.send(result);
 });
 
-// get payment history for (student)
-// app.get("/payments/:email", async (req, res) => {
-//   const email = req.params.email;
-//   console.log(email);
-//   const query = { studentEmail: email };
-//   const result = await paymentsCollections.find(query).toArray();
-//   res.send(result);
-// });
 
 app.listen(port, () => {
   console.log(`Craftopia is running on Port : ${port}`);
