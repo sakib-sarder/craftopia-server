@@ -238,7 +238,7 @@ app.patch("/classes/:id", async (req, res) => {
     },
   };
   const result = await classCollection.updateOne(query, updateDoc);
-  console.log(result);
+  // console.log(result);
   res.send(result);
 });
 
