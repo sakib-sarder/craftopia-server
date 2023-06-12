@@ -39,7 +39,7 @@ const client = new MongoClient(uri, {
   },
 });
 
-//
+//database connect
 const dbConnect = async () => {
   try {
     client.connect();
