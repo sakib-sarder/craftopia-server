@@ -121,6 +121,20 @@ const verifyStudent = async (req, res, next) => {
   next();
 };
 
+//Instructor Identify -->
+app.get('/users/instructor/:email', verifyJWT, verifyInstructor, async (req, res) => {
+  const email = req.params.email;
+
+  if (req.decoded.email !== email) {
+    res.send({ instructor: false })
+  }
+
+  const query = { email: email }
+  const user = await usersCollection.findOne(query);
+  const result = { instructor: user?.role === 'Instructor' }
+  res.send(result);
+})
+
 // Save User Info In DB
 app.put("/users/:email", async (req, res) => {
   const email = req.params.email;
